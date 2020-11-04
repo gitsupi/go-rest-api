@@ -19,10 +19,11 @@ func HashAndSalt(pwd string) string {
 	// convert the bytes to a string and return it
 	return string(hash)
 }
-func ComparePasswords(hashedPwd string, plainPwd []byte) bool {
+func ComparePasswords(hashedPwd string, plainPwd string) bool {
 	// Since we'll be getting the hashed password from the DB it
 	// will be a string so we'll need to convert it to a byte slice
-	err := bcrypt.CompareHashAndPassword([]byte(hashedPwd), plainPwd)
+
+	err := bcrypt.CompareHashAndPassword([]byte(hashedPwd), []byte(plainPwd))
 	if err != nil {
 		log.Println(err)
 		return false

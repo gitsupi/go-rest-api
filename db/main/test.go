@@ -16,11 +16,10 @@ import (
 func Test(t *testing.T) {
 	var filter = bson.M{}
 	//objID, _ := primitive.ObjectIDFromHex(username)
-	username := "god/.*"
+	username := "kingmain"
 	filter = bson.M{"firstname": primitive.Regex{Pattern: "god", Options: ""}}
 	var result []bson.M
 	cur, _ := db.UserCollection.Find(context.Background(), filter)
-
 	defer cur.Close(context.Background())
 	_ = cur.All(context.Background(), &result)
 	fmt.Printf("%v\n", result)
@@ -33,10 +32,11 @@ func Test(t *testing.T) {
 	print(x)
 	asin := math.Sinh(x)
 	us := &model.User{
-		FirstName: "god" + strconv.FormatFloat(asin, 'f', 2, 32),
-		LastName:  "king",
-		Username:  username,
-		Password:  "23",
+		FirstName:   "god" + strconv.FormatFloat(asin, 'f', 2, 32),
+		LastName:    "king",
+		Username:    username,
+		Phonenumber: "093511844321",
+		Password:    db.HashAndSalt("23"),
 	}
 	fmt.Printf("user %v\n", us)
 	res, err := db.UserCollection.InsertOne(context.Background(), us)

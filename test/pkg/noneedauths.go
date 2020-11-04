@@ -16,10 +16,11 @@ import (
 var Collection = db.UserCollection
 var ctx = context.Background()
 
-func hate(c *fiber.Ctx) error {
-	get := c.Get("user-Agent")
-	//fmt.Printf("%s", get)
-	return c.SendString(get)
+func NonAuthentically(app *fiber.App) {
+	app.Get("/hate", lovehandle)
+	app.Post("/login", login)
+	app.Post("/dynamicpass", dynamicpass)
+	app.Post("/dp/verify", dpverify)
 
 }
 
@@ -29,50 +30,40 @@ func login(c *fiber.Ctx) error {
 
 	fmt.Printf("%v, %v\n", username, pass)
 
-	// Throws Unauthorized error
-	//if username != "god" || pass != "doe" {
-	//	return c.SendStatus(fiber.StatusUnauthorized)
-	//}
-
 	//verify is username and pass is in db and corrected
 	var user model.User
 	if err := usercollection.FindOne(ctx, bson.M{"username": username}).Decode(&user); err != nil {
 		//log.Fatal(err)
+		c.Status(fiber.StatusUnauthorized)
 		return c.SendString(err.Error())
 	}
 
-	fmt.Println("king ", user)
+	if db.ComparePasswords(user.Password, pass) {
 
-	// Create token
-	token := jwt.New(jwt.SigningMethodHS256)
-	// Set claims
-	claims := token.Claims.(jwt.MapClaims)
-	//asin := math.Asin(rand.Float64())
-	//us := &model.User{
-	//	FirstName: "god" + strconv.FormatFloat(asin, 'f', 6, 64),
-	//	LastName:  "king",
-	//	Username:  username,
-	//}
-	claims["user"] = username
-	claims["admin"] = false
-	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
+		// Create token
+		token := jwt.New(jwt.SigningMethodHS256)
+		// Set claims
+		claims := token.Claims.(jwt.MapClaims)
+		//asin := math.Asin(rand.Float64())
+		//us := &model.User{
+		//	FirstName: "god" + strconv.FormatFloat(asin, 'f', 6, 64),
+		//	LastName:  "king",
+		//	Username:  username,
+		//}
+		claims["phonenumber"] = username
+		claims["admin"] = false
+		claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
 
-	fmt.Printf("%v", claims)
-	// Generate encoded token and send it as response.
-	t, err := token.SignedString([]byte("secret"))
-	if err != nil {
-		return c.SendStatus(fiber.StatusInternalServerError)
+		fmt.Printf("%v", claims)
+		// Generate encoded token and send it as response.
+		t, err := token.SignedString([]byte("secret"))
+		if err != nil {
+			return c.SendStatus(fiber.StatusInternalServerError)
+		}
+
+		return c.JSON(fiber.Map{"token": t})
 	}
-
-	return c.JSON(fiber.Map{"token": t})
-}
-
-func NonAuthentically(app *fiber.App) {
-	app.Get("/hate", lovehandle)
-	app.Post("/login", login)
-	app.Post("/dynamicpass", dynamicpass)
-	app.Post("/dp/verify", dpverify)
-
+	return c.SendStatus(fiber.StatusUnauthorized)
 }
 
 func dpverify(c *fiber.Ctx) error {
