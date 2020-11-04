@@ -11,15 +11,14 @@ import (
 	"strconv"
 )
 
-var collection = db.UserCollection
+var usercollection = db.UserCollection
 
 func dehashuseruser(c *fiber.Ctx) error {
-	user := c.Locals("user").(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
+
+	var token *jwt.Token = c.Locals("user").(*jwt.Token)
+	claims := token.Claims.(jwt.MapClaims)
 	fmt.Printf("claims %v\n\n", claims)
-	admin := claims["admin"].(bool)
-	println(admin)
-	name := claims["user"].(map[string]interface{})
+	name := claims["phonenumber"].(string)
 	bytes, e := json.Marshal(name)
 	if e != nil {
 		return c.SendString(e.Error())
@@ -50,7 +49,7 @@ func deleteAllCodes(c *fiber.Ctx) error {
 }
 
 func delallusers(c *fiber.Ctx) error {
-	deleteMany, err := collection.DeleteMany(ctx, bson.M{})
+	deleteMany, err := usercollection.DeleteMany(ctx, bson.M{})
 	if err != nil {
 		return c.SendStatus(500)
 	}

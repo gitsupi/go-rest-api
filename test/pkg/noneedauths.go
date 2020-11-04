@@ -36,7 +36,7 @@ func login(c *fiber.Ctx) error {
 
 	//verify is username and pass is in db and corrected
 	var user model.User
-	if err := collection.FindOne(ctx, bson.M{"username": username}).Decode(&user); err != nil {
+	if err := usercollection.FindOne(ctx, bson.M{"username": username}).Decode(&user); err != nil {
 		//log.Fatal(err)
 		return c.SendString(err.Error())
 	}
@@ -45,7 +45,6 @@ func login(c *fiber.Ctx) error {
 
 	// Create token
 	token := jwt.New(jwt.SigningMethodHS256)
-
 	// Set claims
 	claims := token.Claims.(jwt.MapClaims)
 	//asin := math.Asin(rand.Float64())
@@ -55,7 +54,7 @@ func login(c *fiber.Ctx) error {
 	//	Username:  username,
 	//}
 	claims["user"] = username
-	claims["admin"] = true
+	claims["admin"] = false
 	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
 
 	fmt.Printf("%v", claims)
@@ -79,13 +78,38 @@ func NonAuthentically(app *fiber.App) {
 func dpverify(c *fiber.Ctx) error {
 	phoneNumber := c.FormValue("phonenumber")
 	code := c.FormValue("code")
-	verify(&phoneNumber, &code)
-
-	return errors.New("f")
+	tokenmap, exception := verifyandtoken(&phoneNumber, &code)
+	if exception != nil {
+		return exception
+	}
+	return c.JSON(tokenmap)
 }
 
-func verify(number, code *string) {
-	model.Verifycodephone(number, code)
+func verifyandtoken(number, code *string) (fiber.Map, model.VerificationCOdeException) {
+	_, exception := model.Verifycodephone(number, code)
+	if exception != nil {
+		return nil, exception
+	} else {
+		token, err := generateTokenbasephone(*number)
+		return token, err
+	}
+}
+
+func generateTokenbasephone(number string) (fiber.Map, error) {
+	// Create token
+	token := jwt.New(jwt.SigningMethodHS256)
+	// Set claims
+	claims := token.Claims.(jwt.MapClaims)
+	claims["phonenumber"] = number
+	claims["role"] = 0
+	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
+	fmt.Printf("%v", claims)
+	// Generate encoded token and send it as response.
+	t, err := token.SignedString([]byte("secret"))
+	if err != nil {
+		return nil, err
+	}
+	return fiber.Map{"token": t}, nil
 }
 
 func dynamicpass(c *fiber.Ctx) error {

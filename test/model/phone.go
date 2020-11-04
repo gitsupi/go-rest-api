@@ -2,6 +2,7 @@ package model
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -28,9 +29,8 @@ func Verifycodephone(number, code *string) (bool bool, verificationCOdeException
 	}
 	if phoneobj.Code == *code {
 		return true, nil
-	} else
-	{
-		return false, nil
+	} else {
+		return false, errors.New("9999")
 	}
 
 }

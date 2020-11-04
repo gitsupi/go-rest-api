@@ -11,11 +11,12 @@ import (
 )
 
 type User struct {
-	_id       string `json:"id,omitempty"`
-	FirstName string `json:"firstname,omitempty"`
-	LastName  string `json:"lastname,omitempty"`
-	Username  string `json:"username,omitempty"`
-	Password  string `json:"username,omitempty"`
+	_id         string `json:"id,omitempty"`
+	FirstName   string `json:"firstname,omitempty"`
+	LastName    string `json:"lastname,omitempty"`
+	Username    string `json:"username,omitempty"`
+	Phonenumber string `json:"phonenumber"`
+	Password    string `json:"username,omitempty"`
 }
 
 type query interface {
@@ -46,6 +47,7 @@ func (receiver *Userrepository) FindByUsername(username string) *bson.M {
 	_ = cur.All(context.Background(), &result)
 	return &result
 }
+
 //
 //func AddNewUser(username, pass string) bool {
 //
