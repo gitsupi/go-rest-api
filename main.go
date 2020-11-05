@@ -112,7 +112,7 @@ func createPerson(c *fiber.Ctx) error {
 
 func updatePerson(c *fiber.Ctx) error {
 	var person db.Person
-	unmarshaleEroor := json.Unmarshal([]byte(c.Body()), &person)
+	unmarshaleEroor := json.Unmarshal(c.Body(), &person)
 	if unmarshaleEroor != nil {
 		return c.Status(fiber.StatusInternalServerError).SendString(unmarshaleEroor.Error())
 	}

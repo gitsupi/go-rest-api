@@ -35,7 +35,7 @@ func Test(t *testing.T) {
 		FirstName:   "god" + strconv.FormatFloat(asin, 'f', 2, 32),
 		LastName:    "king",
 		Username:    username,
-		Phonenumber: "093511844321",
+		Phonenumber: "09351844321",
 		Password:    db.HashAndSalt("23"),
 	}
 	fmt.Printf("user %v\n", us)

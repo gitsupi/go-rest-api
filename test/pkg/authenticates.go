@@ -8,22 +8,75 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"radical.com/go-rest-api/db"
+	"radical.com/go-rest-api/test/model"
 	"strconv"
 )
 
 var usercollection = db.UserCollection
 
-func dehashuseruser(c *fiber.Ctx) error {
+func Authentically(app *fiber.App, collection *mongo.Collection) {
+	app.Get("/dehashuser", dehashuseruser)
+	app.Get("/delallusers", delallusers)
+	app.Get("/delallphones", deleteAllCodes)
+	app.Post("/adduserinfo", adduserinfo)
 
+}
+
+func adduserinfo(c *fiber.Ctx) error {
+	hashinfo := currentUser(c)
+	user, err := model.GetUserByPhoneNumber(hashinfo["phonenumber"].(string))
+	fmt.Printf("user %v\n", user)
+
+	if err != nil {
+		c.Status(401)
+	}
+	var out map[string]string
+	err = c.BodyParser(&out)
+	fmt.Printf("out %v\n", out)
+	fmt.Printf("er %v\n", err)
+
+	err = user.UpdateUserInfo(user, out)
+	fmt.Printf("er2 %v\n", err)
+	return c.Status(200).JSON(model.Status{
+		Status:      "ok",
+		Code:        1,
+		Description: "ok is clear",
+	})
+
+}
+
+func currentUser(c *fiber.Ctx) map[string]interface{} {
 	var token *jwt.Token = c.Locals("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
-	fmt.Printf("claims %v\n\n", claims)
-	name := claims["phonenumber"].(string)
-	bytes, e := json.Marshal(name)
-	if e != nil {
-		return c.SendString(e.Error())
+	//fmt.Printf("\nclaims %v\n", claims)
+
+	user, ok := claims["user"].(map[string]interface{})
+	if !ok {
+		c.Status(400)
 	}
-	return c.SendString(string(bytes))
+	return user
+}
+
+func dehashuseruser(c *fiber.Ctx) error {
+	var token *jwt.Token = c.Locals("user").(*jwt.Token)
+	claims := token.Claims.(jwt.MapClaims)
+	fmt.Printf("\nclaims %v\n", claims)
+
+	user, ok := claims["user"].(map[string]interface{})
+	if ok {
+		bytes, e := json.Marshal(user)
+		if e != nil {
+			return c.SendString(e.Error())
+		}
+		return c.SendString(string(bytes))
+	}
+
+	return c.JSON(model.Status{
+		Status:      "nok",
+		Code:        8888,
+		Description: "can not convert user hash",
+	})
+
 }
 
 func lovehandle(c *fiber.Ctx) error {
@@ -31,13 +84,6 @@ func lovehandle(c *fiber.Ctx) error {
 	//fmt.Printf("%s", get)
 	c.SendString(get)
 	return nil
-}
-
-func Authentically(app *fiber.App, collection *mongo.Collection) {
-	app.Get("/dehashuser", dehashuseruser)
-	app.Get("/delallusers", delallusers)
-	app.Get("/delallphones", deleteAllCodes)
-
 }
 
 func deleteAllCodes(c *fiber.Ctx) error {

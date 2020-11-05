@@ -35,10 +35,12 @@ func login(c *fiber.Ctx) error {
 	if err := usercollection.FindOne(ctx, bson.M{"username": username}).Decode(&user); err != nil {
 		//log.Fatal(err)
 		c.Status(fiber.StatusUnauthorized)
-		return c.SendString(err.Error())
+		return c.JSON(map[string]interface{}{"status": "fail",
+			"code": "user not found"})
 	}
 
 	if db.ComparePasswords(user.Password, pass) {
+		fmt.Printf("%v", user)
 
 		// Create token
 		token := jwt.New(jwt.SigningMethodHS256)
@@ -50,7 +52,7 @@ func login(c *fiber.Ctx) error {
 		//	LastName:  "king",
 		//	Username:  username,
 		//}
-		claims["phonenumber"] = username
+		claims["user"] = user
 		claims["admin"] = false
 		claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
 
@@ -91,10 +93,10 @@ func generateTokenbasephone(number string) (fiber.Map, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 	// Set claims
 	claims := token.Claims.(jwt.MapClaims)
-	claims["phonenumber"] = number
+	claims["user"] = model.User{Phonenumber: number}
 	claims["role"] = 0
 	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
-	fmt.Printf("%v", claims)
+	fmt.Printf("new claims %v\n", claims)
 	// Generate encoded token and send it as response.
 	t, err := token.SignedString([]byte("secret"))
 	if err != nil {

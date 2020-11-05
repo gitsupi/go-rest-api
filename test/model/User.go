@@ -7,7 +7,8 @@ import (
 	"context"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"radical.com/go-rest-api/db"
 )
 
 type User struct {
@@ -22,27 +23,44 @@ type User struct {
 type query interface {
 }
 
-type Userrepository struct {
-	collection *mongo.Collection
+//repository query to find
+func (rec *User) UpdateUserInfo(user *User, info map[string]string) error {
+	var filter = bson.M{"phonenumber": rec.Phonenumber}
+	updateM := bson.M{"$set": info}
+	upsert := true
+	_, er := db.UserCollection.UpdateOne(context.Background(),
+		filter,
+		updateM,
+		&options.UpdateOptions{Upsert: &upsert})
+	return er
 }
 
 //repository query to find
-func (receiver *Userrepository) FindById(id string) *bson.M {
+func GetUserByPhoneNumber(phonenumber string) (*User, error) {
+	var filter = bson.M{}
+	filter = bson.M{"phonenumber": phonenumber}
+	var user User
+	err := db.UserCollection.FindOne(context.Background(), filter).Decode(&user)
+	return &user, err
+}
+
+//repository query to find
+func FindById(id string) *bson.M {
 	var filter = bson.M{}
 	objID, _ := primitive.ObjectIDFromHex(id)
 	filter = bson.M{"_id": objID}
 	var result bson.M
-	cur, _ := receiver.collection.Find(context.Background(), filter)
+	cur, _ := db.UserCollection.Find(context.Background(), filter)
 	defer cur.Close(context.Background())
 	_ = cur.All(context.Background(), &result)
 	return &result
 }
-func (receiver *Userrepository) FindByUsername(username string) *bson.M {
+func FindByUsername(username string) *bson.M {
 	var filter = bson.M{}
 	//objID, _ := primitive.ObjectIDFromHex(username)
 	filter = bson.M{"username": username}
 	var result bson.M
-	cur, _ := receiver.collection.Find(context.Background(), filter)
+	cur, _ := db.UserCollection.Find(context.Background(), filter)
 	defer cur.Close(context.Background())
 	_ = cur.All(context.Background(), &result)
 	return &result
