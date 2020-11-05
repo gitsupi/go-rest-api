@@ -42,7 +42,6 @@ func adduserinfo(c *fiber.Ctx) error {
 		Code:        1,
 		Description: "ok is clear",
 	})
-
 }
 
 func currentUser(c *fiber.Ctx) map[string]interface{} {
