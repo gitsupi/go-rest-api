@@ -19,11 +19,10 @@ type Counting struct {
 	InvestingType int
 }
 type f struct {
-
 }
 
 type Person struct {
-	_id       string   `json:"id,omitempty"`
+	id        string   `json:"id,omitempty"`
 	FirstName string   `json:"firstname,omitempty"`
 	LastName  string   `json:"lastname,omitempty"`
 	Username  string   `json:"username,omitempty"`

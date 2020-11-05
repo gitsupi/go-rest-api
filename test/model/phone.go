@@ -19,7 +19,7 @@ type VerificationCOdeException interface {
 	error
 }
 
-func Verifycodephone(number, code *string) (bool bool, verificationCOdeException VerificationCOdeException) {
+func Verifycoderecieved(number, code *string) (bool bool, verificationCOdeException VerificationCOdeException) {
 	filter := bson.M{"phonenumber": number}
 	result := db.DpPhoneCollection.FindOne(context.Background(), filter)
 	phoneobj := Phone{}

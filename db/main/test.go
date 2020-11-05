@@ -44,6 +44,20 @@ func Test(t *testing.T) {
 	fmt.Printf("err %v\n", err)
 
 }
+func d() {
+
+	acount := model.Acount{
+		Id:             primitive.NewObjectID(),
+		Type:           "btc",
+		Enteredmoneies: make([]model.Enterdmoney, 0),
+	}
+	one, err := db.CountingCollection.InsertOne(context.Background(), acount)
+	fmt.Printf("%v ,  %v\n", one, err)
+	money, err := acount.AddNewEnteryMoney(19000)
+	fmt.Printf("%v ,  %v\n", money, err)
+
+}
+
 func main() {
-	Test(nil)
+	d()
 }

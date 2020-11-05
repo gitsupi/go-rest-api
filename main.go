@@ -29,7 +29,7 @@ func getPerson(c *fiber.Ctx) error {
 	if c.Params("id") != "" {
 		id := c.Params("id")
 		objID, _ := primitive.ObjectIDFromHex(id)
-		filter = bson.M{"_id": objID}
+		filter = bson.M{"id": objID}
 	}
 
 	var results []bson.M
@@ -65,7 +65,7 @@ func getAllPersons(c *fiber.Ctx) error {
 	//if c.Params("id") != "" {
 	//	id := c.Params("id")
 	//	objID, _ := primitive.ObjectIDFromHex(id)
-	//	filter = bson.M{"_id": objID}
+	//	filter = bson.M{"id": objID}
 	//}
 
 	var results []bson.M
@@ -122,7 +122,7 @@ func updatePerson(c *fiber.Ctx) error {
 	}
 
 	objID, _ := primitive.ObjectIDFromHex(c.Params("id"))
-	res, err := collection.UpdateOne(context.Background(), bson.M{"_id": objID}, update)
+	res, err := collection.UpdateOne(context.Background(), bson.M{"id": objID}, update)
 
 	if err != nil {
 		err, _ := json.Marshal(err)
@@ -144,7 +144,7 @@ func deletePerson(c *fiber.Ctx) error {
 	}
 
 	objID, _ := primitive.ObjectIDFromHex(c.Params("id"))
-	res, err := collection.DeleteOne(context.Background(), bson.M{"_id": objID})
+	res, err := collection.DeleteOne(context.Background(), bson.M{"id": objID})
 
 	if err != nil {
 		err, _ := json.Marshal(err)

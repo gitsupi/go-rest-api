@@ -5,26 +5,35 @@ package model
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"radical.com/go-rest-api/db"
 )
 
 type User struct {
-	_id         string `json:"id,omitempty"`
-	FirstName   string `json:"firstname,omitempty"`
-	LastName    string `json:"lastname,omitempty"`
-	Username    string `json:"username,omitempty"`
-	Phonenumber string `json:"phonenumber"`
-	Password    string `json:"username,omitempty"`
+	Id          primitive.ObjectID `bson:"_id" json:"id,omitempty"`
+	FirstName   string             `json:"firstname,omitempty"`
+	LastName    string             `json:"lastname,omitempty"`
+	Username    string             `json:"username,omitempty"`
+	Phonenumber string             `json:"phonenumber"`
+	Password    string             `json:"password,omit"`
 }
 
 type query interface {
 }
 
 //repository query to find
-func (rec *User) UpdateUserInfo(user *User, info map[string]string) error {
+func (rec *User) UpdateUserInfo(info map[string]string) error {
+	if val, ok := info["phonenumber"]; ok {
+		fmt.Print(val)
+		if checkPhoneNumberisBeforeExist(val) {
+			return errors.New("phone number exist before")
+		}
+	}
 	var filter = bson.M{"phonenumber": rec.Phonenumber}
 	updateM := bson.M{"$set": info}
 	upsert := true
@@ -35,10 +44,30 @@ func (rec *User) UpdateUserInfo(user *User, info map[string]string) error {
 	return er
 }
 
+func checkPhoneNumberisBeforeExist(phonenumber string) bool {
+	user, _ := GetUserByPhoneNumber(phonenumber)
+	fmt.Printf("%v", user)
+	if !user.Id.IsZero() {
+		return true
+	}
+	return false
+}
+
 //repository query to find
 func GetUserByPhoneNumber(phonenumber string) (*User, error) {
 	var filter = bson.M{}
 	filter = bson.M{"phonenumber": phonenumber}
+	var user User
+	err := db.UserCollection.FindOne(context.Background(), filter).Decode(&user)
+	return &user, err
+}
+
+//repository query to find
+func GetUserById(id string) (*User, error) {
+	var filter = bson.M{}
+	hex, _ := primitive.ObjectIDFromHex(id)
+
+	filter = bson.M{"_id": hex}
 	var user User
 	err := db.UserCollection.FindOne(context.Background(), filter).Decode(&user)
 	return &user, err
@@ -66,15 +95,11 @@ func FindByUsername(username string) *bson.M {
 	return &result
 }
 
-//
-//func AddNewUser(username, pass string) bool {
-//
-//	newuser := &User{
-//		FirstName: "god" + strconv.FormatFloat(asin, 'f', 6, 64),
-//		LastName:  "king",
-//		Username:  username,
-//	}
-//
-//	res, err := db.UserCollection.InsertOne(context.Background(), newuser)
-//
-//}
+func InsertNewUserByPhoneNumber(phonen string) (*mongo.InsertOneResult, error) {
+	newuser := &User{
+		Id:          primitive.NewObjectID(),
+		Phonenumber: phonen,
+	}
+	return db.UserCollection.InsertOne(context.Background(), newuser)
+
+}

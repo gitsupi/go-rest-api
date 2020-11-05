@@ -2,7 +2,6 @@ package pkg
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gofiber/fiber"
 	"go.mongodb.org/mongo-driver/bson"
@@ -18,29 +17,38 @@ func Authentically(app *fiber.App, collection *mongo.Collection) {
 	app.Get("/dehashuser", dehashuseruser)
 	app.Get("/delallusers", delallusers)
 	app.Get("/delallphones", deleteAllCodes)
-	app.Post("/adduserinfo", adduserinfo)
+	app.Post("/adduserinfo", addOrUpdateuserinfo)
 
 }
 
-func adduserinfo(c *fiber.Ctx) error {
+func addOrUpdateuserinfo(c *fiber.Ctx) error {
 	hashinfo := currentUser(c)
-	user, err := model.GetUserByPhoneNumber(hashinfo["phonenumber"].(string))
-	fmt.Printf("user %v\n", user)
-
+	user, err := model.GetUserById(hashinfo["id"].(string))
 	if err != nil {
 		c.Status(401)
 	}
 	var out map[string]string
 	err = c.BodyParser(&out)
-	fmt.Printf("out %v\n", out)
-	fmt.Printf("er %v\n", err)
+	err = user.UpdateUserInfo(out)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(model.Status{
+			Status:      "onok",
+			Code:        7777,
+			Description: err.Error(),
+		})
+	}
+	tokenbasephone, err := generateTokenbaseInfoMap(map[string]interface{}{
+		"id":          user.Id.Hex(),
+		"firstname":   user.FirstName,
+		"lastname":    user.LastName,
+		"username":    user.Username,
+		"phonenumber": user.Phonenumber,
+	})
 
-	err = user.UpdateUserInfo(user, out)
-	fmt.Printf("er2 %v\n", err)
-	return c.Status(200).JSON(model.Status{
-		Status:      "ok",
-		Code:        1,
-		Description: "ok is clear",
+	return c.Status(200).JSON(model.InfoResponse{
+		Status: "ok",
+		Code:   1,
+		Token:  tokenbasephone,
 	})
 }
 
@@ -59,7 +67,7 @@ func currentUser(c *fiber.Ctx) map[string]interface{} {
 func dehashuseruser(c *fiber.Ctx) error {
 	var token *jwt.Token = c.Locals("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
-	fmt.Printf("\nclaims %v\n", claims)
+	//fmt.Printf("\nclaims %v\n", claims)
 
 	user, ok := claims["user"].(map[string]interface{})
 	if ok {

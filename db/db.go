@@ -10,6 +10,8 @@ import (
 )
 
 //GetMongoDbConnection get connection of mongodb
+var client, err = GetMongoDbConnection()
+
 func GetMongoDbConnection() (*mongo.Client, error) {
 
 	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI("mongodb://localhost:27017"))
@@ -26,7 +28,6 @@ func GetMongoDbConnection() (*mongo.Client, error) {
 }
 
 func GetMongoDbCollection(DbName string, CollectionName string) (*mongo.Collection, error) {
-	client, err := GetMongoDbConnection()
 
 	if err != nil {
 		return nil, err

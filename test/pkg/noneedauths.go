@@ -7,6 +7,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gofiber/fiber"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"math/rand"
 	"radical.com/go-rest-api/db"
 	"radical.com/go-rest-api/test/model"
@@ -79,21 +80,25 @@ func dpverify(c *fiber.Ctx) error {
 }
 
 func verifyandtoken(number, code *string) (fiber.Map, model.VerificationCOdeException) {
-	_, exception := model.Verifycodephone(number, code)
+	_, exception := model.Verifycoderecieved(number, code)
 	if exception != nil {
 		return nil, exception
 	} else {
-		token, err := generateTokenbasephone(*number)
+		//add user with at least data to db
+		insertOneResult, err := model.InsertNewUserByPhoneNumber(*number)
+		id := insertOneResult.InsertedID.(primitive.ObjectID)
+
+		token, err := generateTokenbasephone(id, *number)
 		return token, err
 	}
 }
 
-func generateTokenbasephone(number string) (fiber.Map, error) {
+func generateTokenbasephone(number primitive.ObjectID, phonenumber string) (fiber.Map, error) {
 	// Create token
 	token := jwt.New(jwt.SigningMethodHS256)
 	// Set claims
 	claims := token.Claims.(jwt.MapClaims)
-	claims["user"] = model.User{Phonenumber: number}
+	claims["user"] = model.User{Id: number, Phonenumber: phonenumber}
 	claims["role"] = 0
 	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
 	fmt.Printf("new claims %v\n", claims)
@@ -103,6 +108,22 @@ func generateTokenbasephone(number string) (fiber.Map, error) {
 		return nil, err
 	}
 	return fiber.Map{"token": t}, nil
+}
+func generateTokenbaseInfoMap(infomap map[string]interface{}) (string, error) {
+	// Create token
+	token := jwt.New(jwt.SigningMethodHS256)
+	// Set claims
+	claims := token.Claims.(jwt.MapClaims)
+	claims["user"] = infomap
+	claims["role"] = 0
+	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
+	fmt.Printf("new claims %v\n", claims)
+	// Generate encoded token and send it as response.
+	t, err := token.SignedString([]byte("secret"))
+	if err != nil {
+		return "", err
+	}
+	return t, nil
 }
 
 func dynamicpass(c *fiber.Ctx) error {
